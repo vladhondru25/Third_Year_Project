@@ -88,27 +88,26 @@ try:
 		if Y_axis < 0:
 			if X_axis > 0:
 				r_speed = r_speed + 50
-				#robohat.turnForward(l_speed, r_speed)
+				robohat.turnForward(l_speed, r_speed)
 			elif X_axis < 0:
 				l_speed = l_speed + 50
-				#robohat.turnForward(l_speed, r_speed)
+				robohat.turnForward(l_speed, r_speed)
 			else:
 				pass
-				#robohat.turnForward(l_speed, r_speed)	
+				robohat.turnForward(l_speed, r_speed)	
 		elif Y_axis > 0:
 			if X_axis > 0:
 				r_speed = -r_speed
 				l_speed = l_speed + 50
-				#robohat.turnReverse(l_speed, r_speed)
+				robohat.turnReverse(l_speed, r_speed)
 			elif X_axis < 0:
 				l_speed = -l_speed
 				r_speed = r_speed + 50
-				#robohat.turnReverse(l_speed, r_speed)
+				robohat.turnReverse(l_speed, r_speed)
 			else:
 				r_speed = -r_speed
 				l_speed = -l_speed
-				#robohat.turnReverse(l_speed, r_speed)	
-			print("Left: " + str(l_speed) + ", Right: " + str(r_speed)) 
+				robohat.turnReverse(l_speed, r_speed)	
 		else:
 			if X_axis > 0:
 				robohat.spinRight(abs(l_speed))
