@@ -1,10 +1,12 @@
 import robohat, time
 import XboxController
+import RPi.GPIO as gpio
 import math
 
 import sys
 import tty
 import termios
+import subprocess
 
 print("Start")
 
@@ -77,47 +79,86 @@ xboxCont = XboxController.XboxController( controllerCallBack = None,
 robohat.init()
 xboxCont.start()
 
+servo_tilt = 22
+servo_pan = 18
+gpio.setup(servo_tilt, gpio.OUT)
+gpio.setup(servo_pan, gpio.OUT)
+tilt_pwm = gpio.PWM(servo_tilt, 200)
+pan_pwm = gpio.PWM(servo_pan, 200)
+tilt_pwm.start(16) # 16-40
+pan_pwm.start(14)  # 14-20
+time.sleep(0.5) 
+
+mode = 1 # 1-AUTONOMOUS 2-Joystick
+
 time.sleep(1)
 
 # main loop
 try:
 	while True:
-		#here
-		Y_axis = xboxCont.LTHUMBY
-		X_axis = xboxCont.LTHUMBX
-		r_speed, l_speed = joystickToDiff(X_axis, -Y_axis, -1, 1, -100, 100)
-		#print("Left: " + str(l_speed) + ", Right: " + str(r_speed))
-		if Y_axis < 0:
-			if X_axis > 0:
-				r_speed = r_speed + 50
-				robohat.turnForward(l_speed, r_speed)
-			elif X_axis < 0:
-				l_speed = l_speed + 50
-				robohat.turnForward(l_speed, r_speed)
+		if mode == 2:
+			if xboxCont.BACK:
+				subprocess.call(["shutdown", "-h", "now"])
+			
+			if xboxCont.RB:
+				mode = 1
+				
+			#here
+			Y_axis = xboxCont.LTHUMBY
+			X_axis = xboxCont.LTHUMBX
+			r_speed, l_speed = joystickToDiff(X_axis, -Y_axis, -1, 1, -100, 100)
+			#print("Left: " + str(l_speed) + ", Right: " + str(r_speed))
+			if Y_axis < 0:
+				if X_axis > 0:
+					r_speed = r_speed + 50
+					robohat.turnForward(l_speed, r_speed)
+				elif X_axis < 0:
+					l_speed = l_speed + 50
+					robohat.turnForward(l_speed, r_speed)
+				else:
+					robohat.turnForward(l_speed, r_speed)	
+			elif Y_axis > 0:
+				if X_axis > 0:
+					r_speed = -r_speed
+					l_speed = l_speed + 50
+					robohat.turnReverse(l_speed, r_speed)
+				elif X_axis < 0:
+					l_speed = -l_speed
+					r_speed = r_speed + 50
+					robohat.turnReverse(l_speed, r_speed)
+				else:
+					r_speed = -r_speed
+					l_speed = -l_speed
+					robohat.turnReverse(l_speed, r_speed)	
 			else:
-				pass
-				robohat.turnForward(l_speed, r_speed)	
-		elif Y_axis > 0:
-			if X_axis > 0:
-				r_speed = -r_speed
-				l_speed = l_speed + 50
-				robohat.turnReverse(l_speed, r_speed)
-			elif X_axis < 0:
-				l_speed = -l_speed
-				r_speed = r_speed + 50
-				robohat.turnReverse(l_speed, r_speed)
-			else:
-				r_speed = -r_speed
-				l_speed = -l_speed
-				robohat.turnReverse(l_speed, r_speed)	
+				if X_axis > 0:
+					robohat.spinRight(abs(l_speed))
+				elif X_axis < 0:
+					robohat.spinLeft(abs(r_speed))
+				else:
+					robohat.stop()
+			time.sleep(0.2)
 		else:
-			if X_axis > 0:
-				robohat.spinRight(abs(l_speed))
-			elif X_axis < 0:
-				robohat.spinLeft(abs(r_speed))
-			else:
-				robohat.stop()
-		time.sleep(0.2)
+			if xboxCont.LB:
+				mode = 2
+			
+			for i in range(16, 40, 2):
+				tilt_pwm.ChangeDutyCycle(i)
+				for j in range(14, 21, 2):
+					pan_pwm.ChangeDutyCycle(j)
+					time.sleep(0.2)
+				if xboxCont.LB:
+					mode = 2
+					break
+			if (mode == 1):
+				for i in range(40, 16, -2):
+					tilt_pwm.ChangeDutyCycle(i)
+					for j in range(14, 21, 2):
+						pan_pwm.ChangeDutyCycle(j)
+						time.sleep(0.2)
+					if xboxCont.LB:
+						mode = 2
+						break
 		
 
 except KeyboardInterrupt:
