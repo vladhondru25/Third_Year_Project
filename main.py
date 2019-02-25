@@ -10,6 +10,8 @@ import subprocess
 
 print("Start")
 
+robohat.init()
+
 def map(v, in_min, in_max, out_min, out_max):
 	# Check that the value is at least in_min
 	if v < in_min:
@@ -69,6 +71,23 @@ def joystickToDiff(x, y, minJoystick, maxJoystick, minSpeed, maxSpeed):
 	leftOut = map(rawLeft, minJoystick, maxJoystick, minSpeed, maxSpeed)
 
 	return (rightOut, leftOut)
+	
+
+lastL = robohat.irLeft()
+lastR = robohat.irRight()
+
+def detect_object():
+	global lastL, lastR
+	newL = robohat.irLeft()
+	newR = robohat.irRight()
+	if (newL != lastL) or (newR != lastR):
+		robohat.turnReverse(40, 40)
+		time.sleep(1)
+		robohat.spinRight(70)
+		time.sleep(0.4)
+		robohat.turnForward(40, 40)
+	else:
+		pass
 
 xboxCont = XboxController.XboxController( controllerCallBack = None,
     					  joystickNo = 0,
@@ -76,7 +95,6 @@ xboxCont = XboxController.XboxController( controllerCallBack = None,
     					  scale = 1,
     					  invertYAxis = False)
 
-robohat.init()
 xboxCont.start()
 
 servo_tilt = 22
@@ -141,20 +159,25 @@ try:
 		else:
 			if xboxCont.LB:
 				mode = 2
+				
+			robohat.turnForward(40, 40)
 			
 			for i in range(16, 40, 2):
 				tilt_pwm.ChangeDutyCycle(i)
 				for j in range(14, 21, 2):
 					pan_pwm.ChangeDutyCycle(j)
+					detect_object()
 					time.sleep(0.2)
 				if xboxCont.LB:
 					mode = 2
 					break
+				
 			if (mode == 1):
 				for i in range(40, 16, -2):
 					tilt_pwm.ChangeDutyCycle(i)
 					for j in range(14, 21, 2):
 						pan_pwm.ChangeDutyCycle(j)
+						detect_object()
 						time.sleep(0.2)
 					if xboxCont.LB:
 						mode = 2
