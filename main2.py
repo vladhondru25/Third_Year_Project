@@ -25,10 +25,10 @@ class InitioXboxControl:
 		self.servo_pan = 18
 		gpio.setup(self.servo_tilt, gpio.OUT)
 		gpio.setup(self.servo_pan, gpio.OUT)
-		#self.tilt_pwm = gpio.PWM(self.servo_tilt, 200)
-		#self.pan_pwm  = gpio.PWM(self.servo_pan, 200)
-		#self.tilt_pwm.start(16) # 16-40
-		#self.pan_pwm.start(14)  # 14-20
+		self.tilt_pwm = gpio.PWM(self.servo_tilt, 200)
+		self.pan_pwm  = gpio.PWM(self.servo_pan, 200)
+		self.tilt_pwm.start(16) # 16-40
+		self.pan_pwm.start(14)  # 14-20
 		time.sleep(0.5) 
 
 		self.mode = 1 # 1-AUTONOMOUS 2-Joystick
@@ -40,19 +40,32 @@ class InitioXboxControl:
 		self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.LTHUMBX, self.leftThumbX)
 		self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.LTHUMBY, self.leftThumbY)
 		self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.BACK,    self.backButton)
+		self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.BACK,    self.backButton)
+		self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.RB,      self.rb)
+		self.xboxCont.setupControlCallback(self.xboxCont.XboxControls.LB,      self.lb)
 		
 		self.xboxCont.start()
 		
 		self.running = True
 		
+	
+	def rb(self, value):
+		self.mode = 1
+		
+	def lb(self, value):
+		robohat.stop()
+		self.mode = 2
+	
 		
 	def leftThumbX(self, value):
 		self.xValue = value
-		self.updateMotors()
+		if self.mode == 2:
+			self.updateMotors()
 
 	def leftThumbY(self, value):
 		self.yValue = value
-		self.updateMotors()
+		if self.mode == 2:
+			self.updateMotors()
 		
 		
 	def updateMotors(self):
@@ -109,18 +122,22 @@ class InitioXboxControl:
 				robohat.stop()
 				
 				
-	def pan_and_tilt(self):
+	def autonomous(self):
 		robohat.turnForward(20, 20)
-			
+		self.pan_and_tilt()
+				
+				
+	def pan_and_tilt(self):		
 		for i in range(16, 40, 2):
 			self.tilt_pwm.ChangeDutyCycle(i)
 			for j in range(14, 21, 2):
 				self.pan_pwm.ChangeDutyCycle(j)
 				self.detect_object()
+				if self.mode == 2:
+					break
 				time.sleep(0.2)
-			#if xboxCont.LB:
-			#	mode = 2
-			#	break
+			if self.mode == 2:
+				break
 				
 		if (self.mode == 1):
 			for i in range(40, 16, -2):
@@ -128,10 +145,11 @@ class InitioXboxControl:
 				for j in range(14, 21, 2):
 					self.pan_pwm.ChangeDutyCycle(j)
 					self.detect_object()
+					if self.mode == 2:
+						break
 					time.sleep(0.2)
-				#if xboxCont.LB:
-				#	mode = 2
-				#	break	
+				if self.mode == 2:
+					break
 	
 		
 	def backButton(self, value):
@@ -221,6 +239,8 @@ if __name__ == '__main__':
 		#create class
 		initioCont = InitioXboxControl()
 		while initioCont.running:
+			if initioCont.mode == 1:
+				initioCont.autonomous()
 			time.sleep(0.1)
 
     #Ctrl C
