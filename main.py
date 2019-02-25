@@ -77,6 +77,8 @@ xboxCont = XboxController.XboxController( controllerCallBack = None,
 robohat.init()
 xboxCont.start()
 
+time.sleep(1)
+
 # main loop
 try:
 	while True:
@@ -115,6 +117,7 @@ try:
 				robohat.spinLeft(abs(r_speed))
 			else:
 				robohat.stop()
+		time.sleep(0.2)
 		
 
 except KeyboardInterrupt:
@@ -123,4 +126,3 @@ except KeyboardInterrupt:
 finally:
     robohat.cleanup()
     
-
